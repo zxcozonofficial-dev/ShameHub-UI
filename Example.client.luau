@@ -2,34 +2,11 @@
 local ShameHub = require(game:GetService("ReplicatedStorage"):WaitForChild("ShameHub"))
 
 local window = ShameHub.CreateWindow({
-    Title = "ShameHub", Subtitle = "SCRIPT INTERFACE", Footer = "ShameHub / local session",
+    Title = "ShameHub", Subtitle = "SCRIPT INTERFACE", Version = "Dev",
 })
 
 local general = window:AddPage({ Title = "General" })
-local interface = general:AddTab("Interface")
-local intro = interface:AddSection({ Title = "Welcome", Side = "Full" })
-intro:AddParagraph("Your workspace", "Everything you need, in one place. Select a section to get started.")
-
-local left = interface:AddSection({ Title = "General", Side = "Left" })
-local enabled = left:AddToggle({ Title = "Enabled", Flag = "Enabled", Default = true,
-    Callback = function(value) window:SetStatus("Enabled / " .. tostring(value)) end })
-left:AddToggle({ Title = "Notifications", Flag = "Notifications", Default = false })
-left:AddToggle({ Title = "Compact mode", Flag = "Compact", Default = true })
-left:AddSlider({ Title = "Intensity", Flag = "Intensity", Min = 0, Max = 100, Default = 65, Suffix = "%",
-    Callback = function(value) window:SetStatus("Intensity / " .. value .. "%") end })
-left:AddParagraph("Preferences", "Changes apply immediately.")
-
-local right = interface:AddSection({ Title = "Appearance", Side = "Right" })
-right:AddDropdown({ Title = "Profile", Flag = "Profile", Values = { "Default", "Minimal", "Detailed" }, Default = "Default",
-    Callback = function(value) window:SetStatus("Profile / " .. value) end })
-right:AddInput({ Title = "Profile name", Flag = "ProfileName", Default = "My profile" })
-right:AddKeybind({ Title = "Quick toggle", Flag = "QuickToggle", Default = Enum.KeyCode.F,
-    OnPressed = function() enabled:Set(not enabled:Get()) end })
-right:AddButton({ Title = "Reset intensity", Callback = function() window.Controls.Intensity:Set(65) end })
-
-local controls = general:AddTab("Controls")
-local keyboard = controls:AddSection({ Title = "Keyboard", Side = "Full" })
-keyboard:AddParagraph("Shortcuts", "RightShift — show / hide. F — quick toggle (rebindable). Click a keybind to capture a key; Escape cancels.")
+general:AddTab("Interface")
 
 local settings = window:AddPage({ Title = "Settings" })
 local appearance = settings:AddTab("Appearance")
@@ -76,6 +53,12 @@ background:AddButton({ Title = "Remove image", Callback = function()
 end })
 background:AddParagraph("Local images", "Run LocalBackground.py once, then choose a PNG, JPG or WebP from your PC.")
 
+local controls = settings:AddTab("Controls")
+controls:AddSection({ Title = "Menu", Side = "Left" }):AddKeybind({
+    Title = "Menu key", Flag = "MenuToggleKey", Default = window.ToggleKey,
+    Callback = function(key) window:SetToggleKey(key) end,
+})
+
 local config = settings:AddTab("Config")
 local storage = config:AddSection({ Title = "Saved configs", Side = "Left" })
 local configName
@@ -92,6 +75,7 @@ local function refreshConfigs(preferred)
     if err then window:SetStatus(err) end
 end
 window.ConfigLoaded = function()
+    window:SetToggleKey(window.Controls.MenuToggleKey:Get())
     window:SetAccent(window.Controls.AccentColor:GetColor())
     window:SetBackgroundOpacity(window.Controls.BackgroundOpacity:Get() / 100)
     window:SetMenuTransparency(window.Controls.MenuTransparency:Get() / 100)

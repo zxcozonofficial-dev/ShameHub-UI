@@ -135,6 +135,8 @@ function ShameHub.CreateWindow(options)
     for key, value in pairs(options.Theme or {}) do self.Theme[key] = value end
     local t = self.Theme
     self.ToggleKey = options.ToggleKey or Enum.KeyCode.RightShift
+    self.Version = tostring(options.Version or "Dev")
+    self.StatusChanged = options.OnStatus
     self.Gui = Instance.new("ScreenGui")
     self.Gui.Name = options.Name or "ShameHub"
     self.Gui.ResetOnSpawn = false
@@ -225,11 +227,11 @@ function ShameHub.CreateWindow(options)
         BackgroundColor3 = t.Background, BackgroundTransparency = 0, ZIndex = 4,
     }, self.Root)
     new("Frame", { Size = UDim2.new(1, 0, 0, 1), BackgroundColor3 = t.Border, ZIndex = 5 }, self.FooterPanel)
-    self.Status = text(self.FooterPanel, options.Footer or "ShameHub / ready", {
+    self.Status = text(self.FooterPanel, "ShameHub / Version " .. self.Version, {
         Position = UDim2.fromOffset(12, 2), Size = UDim2.new(1, -175, 0, 23), TextSize = 12,
         TextColor3 = t.Text, TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 5,
     })
-    text(self.FooterPanel, "RIGHT SHIFT  /  MENU", {
+    self.MenuKeyLabel = text(self.FooterPanel, "RIGHT SHIFT  /  MENU", {
         Position = UDim2.new(1, -150, 0, 2), Size = UDim2.fromOffset(138, 23),
         TextXAlignment = Enum.TextXAlignment.Right, TextColor3 = t.Text, TextSize = 12, ZIndex = 5,
         Text = self.ToggleKey.Name:upper() .. "  /  MENU",
@@ -265,7 +267,7 @@ function ShameHub.CreateWindow(options)
     self:_connect(UIS.InputChanged, changeDrag)
     self:_connect(UIS.InputEnded, endDrag)
     self:_connect(UIS.InputBegan, function(input, processed)
-        if not processed and not UIS:GetFocusedTextBox() and not self.Capturing and input.KeyCode == self.ToggleKey then
+        if not UIS:GetFocusedTextBox() and not self.Capturing and self.LastCaptured ~= input and input.KeyCode == self.ToggleKey then
             self:SetVisible(not self.Root.Visible)
         end
     end)
@@ -430,7 +432,23 @@ function Window:SetMenuTransparencyEnabled(enabled)
     self.Root.GroupTransparency = enabled and self.MenuTransparency or 0
 end
 
-function Window:SetStatus(value) self.Status.Text = tostring(value) end
+function Window:SetVersion(value)
+    assert(type(value) == "string" or type(value) == "number", "Version expects string or number")
+    self.Version = tostring(value)
+    self.Status.Text = "ShameHub / Version " .. self.Version
+end
+
+function Window:SetToggleKey(value)
+    if type(value) == "string" then value = Enum.KeyCode[value] end
+    assert(typeof(value) == "EnumItem" and value.EnumType == Enum.KeyCode and value ~= Enum.KeyCode.Unknown, "Invalid menu key")
+    self.ToggleKey = value
+    self.MenuKeyLabel.Text = value.Name:upper() .. "  /  MENU"
+end
+
+function Window:SetStatus(value)
+    self.LastStatus = tostring(value)
+    invoke(self.StatusChanged, self.LastStatus)
+end
 function Window:Destroy()
     if self.Dead then return end
     self.Dead = true
@@ -695,6 +713,7 @@ function Section:AddKeybind(options)
             if input.KeyCode == Enum.KeyCode.Unknown then return end
             w.Capturing = nil
             w.LastCaptured = input
+            task.defer(function() if w.LastCaptured == input then w.LastCaptured = nil end end)
             if input.KeyCode ~= Enum.KeyCode.Escape then control:Set(input.KeyCode.Name) else button.Text = control:Get() end
         elseif not w.Capturing and w.LastCaptured ~= input and not processed and not UIS:GetFocusedTextBox() and input.KeyCode.Name == control:Get() then
             invoke(options.OnPressed)

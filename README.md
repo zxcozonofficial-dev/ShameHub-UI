@@ -36,7 +36,7 @@ Geist загружается из закреплённого npm-пакета `g
 
 1. Создай ModuleScript `ShameHub` в `ReplicatedStorage`, вставь содержимое `ShameHub.luau`.
 2. Создай LocalScript `ShameHubExample` в `StarterPlayer > StarterPlayerScripts`, вставь `Example.client.luau`.
-3. Нажми Play. Перетаскивай окно за любую точку верхней полосы, включая область вкладок; обычный клик переключает вкладку. RightShift скрывает/показывает окно; F переключает первый toggle.
+3. Нажми Play. Перетаскивай окно за любую точку верхней полосы, включая область вкладок; обычный клик переключает вкладку. RightShift скрывает/показывает окно;
 
 С Rojo: `rojo build default.project.json -o ShameHub.rbxlx`, затем открой созданный place в Studio и нажми Play. Или `rojo serve default.project.json` и подключись плагином Studio.
 
@@ -70,7 +70,7 @@ print(toggle:Get(), window.Flags.Enabled)
 
 `window:ExportConfig()` и `window:ImportConfig(json, silent?)` остаются низкоуровневым API сериализации. В интерфейсе используются именованные файловые конфиги, без поля JSON.
 
-`CreateWindow` принимает Title, Subtitle, Footer, Name, Parent, DisplayOrder, ToggleKey, Theme. `Theme` переопределяет Color3-поля: Background, Sidebar, Panel, Raised, Border, Text, Muted, Accent. Тема задаётся при создании окна.
+`CreateWindow` принимает Title, Subtitle, Footer, Name, Parent, DisplayOrder, ToggleKey, Version, Theme, OnStatus. `Theme` переопределяет Color3-поля: Background, Sidebar, Panel, Raised, Border, Text, Muted, Accent. Тема задаётся при создании окна.
 
 `window:SetVisible(boolean)`, `window:SetStatus(string)`, `window:Destroy()`. Размер 680×440, автоматически уменьшается под доступный экран. На маленьком экране две колонки сохраняются. Перетаскивание и slider поддерживают мышь и touch.
 
@@ -122,3 +122,9 @@ API: `ListConfigs()` → names, error; `SaveConfig(name)`, `LoadConfig(name)`, `
 
 `section:AddList({Title="Configurations",Values={},Height=140,Callback=...})` возвращает Get/Set и SetValues(values, preferred?). Полностью округлые переключатели используют один UICorner с радиусом 50%.
 Список конфигов подстраивает высоту под число строк (30 px на строку, отступ 4 px) до заданного Height; затем включается прокрутка. Имена выровнены влево, выбранная строка отмечена кружком, рядом с заголовком отображается количество конфигов.
+
+## Версия и клавиша меню
+
+Нижняя подпись всегда показывает `ShameHub / Version Dev`. Версия задаётся параметром `CreateWindow({Version="1.0"})` или методом `window:SetVersion("1.0")`. Операционные сообщения не заменяют эту строку: SetStatus сохраняет LastStatus и вызывает необязательный OnStatus callback.
+
+В примере General содержит один пустой таб Interface. Настройки интерфейса остаются в Settings. В Settings → Controls нажми Menu key и затем нужную клавишу; Escape отменяет назначение. По умолчанию RightShift. Назначение сохраняется в конфиге. API: `window:SetToggleKey(Enum.KeyCode.Insert)` или `window:SetToggleKey("Insert")`; подсказка в нижней панели обновляется автоматически. При вводе текста меню на клавишу не реагирует.
