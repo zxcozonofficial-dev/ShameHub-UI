@@ -141,3 +141,9 @@ API: `ListConfigs()` → names, error; `SaveConfig(name)`, `LoadConfig(name)`, `
 
 Диагностика: `UI.Assets.DownloadCount`, `UI.Assets.CacheHits`, `UI.Assets.Errors`. `UI.PreloadIcons()` ожидает текущую очередь загрузки. В клиенте без файлового API или при недоступной сети для незакэшированных иконок используются резервные UI-фигуры.
 Иконки меню: 20×20 px, неактивный цвет IconMuted = RGB(190,190,202), штрих SVG 2.5. Текущий набор — assets/icons/v2; новая версия кэша загружается автоматически, старые файлы не перезаписываются.
+
+## Карточка профиля
+
+Внизу боковой панели отображаются аватар Roblox, имя игрока, индикатор статуса, Subscription и Expires at. По умолчанию Subscription=Free, ExpiresIn=0, Online=true. Это отображаемые данные интерфейса, а не проверка лицензии или подписки.
+
+Параметры: `CreateWindow({Profile={Name="Player",Subscription="Free",ExpiresIn=0,Online=true}})`. Имя без переопределения берётся из LocalPlayer.Name, аватар — AvatarBust текущего игрока. Данные можно обновить через `window:SetProfile({Subscription="Pro",ExpiresIn=3600})`. `Profile=false` отключает карточку. Список страниц заканчивается выше карточки и не перекрывает её.

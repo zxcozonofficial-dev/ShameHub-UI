@@ -238,6 +238,7 @@ function ShameHub.CreateWindow(options)
     self:_connect(bounds:GetPropertyChangedSignal("AbsoluteSize"), resize)
     resize()
     local sidebar = new("Frame", { Size = UDim2.new(0, 132, 1, -25), BackgroundColor3 = t.Sidebar }, self.Root)
+    self.Sidebar = sidebar
     table.insert(self.SurfaceFrames, sidebar)
     local titleText = options.Title or "ShameHub"
     local brandWidth = 124
@@ -338,6 +339,7 @@ function ShameHub.CreateWindow(options)
     end)
     self:_connect(self.Gui.Destroying, function() self:Destroy() end)
     self:SetBackground(options.Background == nil and "default" or options.Background)
+    if options.Profile ~= false then self:_createProfileCard(options.Profile or {}) end
     self:_createWatermark(options)
     return self
 end
@@ -469,6 +471,63 @@ function Window:_registerIcon(icon, resolve)
         if item:IsA("UIStroke") then self:_accent(item, "Color", resolve)
         elseif item:IsA("Frame") and item.BackgroundTransparency < 1 then self:_accent(item, "BackgroundColor3", resolve) end
     end
+end
+
+function Window:_createProfileCard(profile)
+    local t = self.Theme
+    self.ProfileCard = new("Frame", {
+        Name = "ProfileCard", Position = UDim2.new(0, 8, 1, -100), Size = UDim2.new(1, -16, 0, 92),
+        BackgroundColor3 = t.Panel, ClipsDescendants = true,
+    }, self.Sidebar)
+    corner(self.ProfileCard, 7)
+    stroke(self.ProfileCard, t.Border)
+    self.Menu.Size = UDim2.new(1, -16, 1, -188)
+    local avatar = new("ImageLabel", {
+        Name = "Avatar", Position = UDim2.fromOffset(8, 9), Size = UDim2.fromOffset(32, 32),
+        BackgroundColor3 = t.Raised, Image = "", ScaleType = Enum.ScaleType.Crop,
+    }, self.ProfileCard)
+    corner(avatar, 32)
+    stroke(avatar, t.Border)
+    self.ProfileOnline = new("Frame", {
+        Name = "Online", Position = UDim2.fromOffset(33, 34), Size = UDim2.fromOffset(8, 8),
+        BackgroundColor3 = Color3.fromRGB(35, 205, 120),
+    }, self.ProfileCard)
+    corner(self.ProfileOnline, 8)
+    stroke(self.ProfileOnline, t.Panel)
+    self.ProfileName = text(self.ProfileCard, "", {
+        Position = UDim2.fromOffset(47, 9), Size = UDim2.new(1, -53, 0, 32),
+        TextSize = 13, TextTruncate = Enum.TextTruncate.AtEnd,
+    })
+    self.ProfileSubscription = text(self.ProfileCard, "", {
+        Position = UDim2.fromOffset(8, 49), Size = UDim2.new(1, -16, 0, 16), TextSize = 11,
+        TextColor3 = t.Text, RichText = true, TextTruncate = Enum.TextTruncate.AtEnd,
+    })
+    self.ProfileExpiry = text(self.ProfileCard, "", {
+        Position = UDim2.fromOffset(8, 68), Size = UDim2.new(1, -16, 0, 16), TextSize = 11,
+        TextColor3 = t.Muted, TextTruncate = Enum.TextTruncate.AtEnd,
+    })
+    self.ProfileData = { Name = Players.LocalPlayer.Name, Subscription = "Free", ExpiresIn = 0, Online = true }
+    self:SetProfile(profile)
+    task.spawn(function()
+        local ok, url = pcall(function()
+            return Players:GetUserThumbnailAsync(Players.LocalPlayer.UserId, Enum.ThumbnailType.AvatarBust, Enum.ThumbnailSize.Size100x100)
+        end)
+        if not self.Dead and ok then avatar.Image = url end
+    end)
+end
+
+function Window:SetProfile(profile)
+    assert(type(profile) == "table", "Profile expects a table")
+    if not self.ProfileCard then return end
+    for _, key in ipairs({"Name", "Subscription", "ExpiresIn", "Online"}) do
+        if profile[key] ~= nil then self.ProfileData[key] = profile[key] end
+    end
+    local data = self.ProfileData
+    local subscription = tostring(data.Subscription):gsub("&", "&amp;"):gsub("<", "&lt;"):gsub(">", "&gt;")
+    self.ProfileName.Text = tostring(data.Name)
+    self.ProfileSubscription.Text = '<font color="#' .. self.Theme.Muted:ToHex() .. '">Subscription:</font> ' .. subscription
+    self.ProfileExpiry.Text = "Expires at: " .. tostring(data.ExpiresIn) .. " seconds"
+    self.ProfileOnline.BackgroundColor3 = data.Online and Color3.fromRGB(35, 205, 120) or self.Theme.Muted
 end
 
 function Window:_createWatermark(options)
