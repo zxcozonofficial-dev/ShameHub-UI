@@ -34,7 +34,71 @@ local function loadTypeface()
 end
 local BoldFont, TypefaceName = loadTypeface()
 
+local IconAssets = {
+    Version = "lucide-0.468.0-v1",
+    BaseUrl = "https://raw.githubusercontent.com/zxcozonofficial-dev/ShameHub-UI/main/assets/icons/",
+    CacheFolder = "ShameHub/assets/icons/lucide-0.468.0-v1",
+    Files = {
+        Grid = "layout-grid.png", Settings = "settings.png", Info = "info.png", Layout = "panels-top-left.png",
+        Palette = "palette.png", Keyboard = "keyboard.png", Folder = "folder.png", Book = "book-open.png",
+        Monitor = "monitor.png", Network = "wifi.png", Gamepad = "gamepad-2.png",
+    },
+    Bytes = { Grid=1422, Settings=3087, Info=2529, Layout=1406, Palette=2928, Keyboard=1479, Folder=1359, Book=1544, Monitor=1220, Network=1782, Gamepad=2213 },
+    Loaded = {}, Errors = {}, DownloadCount = 0, CacheHits = 0, Pending = 0,
+}
+
+local function prepareIcons()
+    if not IconAssets.Started then
+        IconAssets.Started = true
+        if type(getcustomasset) ~= "function" or type(isfile) ~= "function" or type(readfile) ~= "function"
+            or type(writefile) ~= "function" or type(isfolder) ~= "function" or type(makefolder) ~= "function" then
+            IconAssets.Errors.Storage = "Custom asset storage unavailable"
+            return false
+        end
+        local ok, err = pcall(function()
+            local path = ""
+            for part in IconAssets.CacheFolder:gmatch("[^/]+") do
+                path = path == "" and part or path .. "/" .. part
+                if not isfolder(path) then makefolder(path) end
+            end
+        end)
+        if not ok then IconAssets.Errors.Storage = tostring(err); return false end
+        for name, file in pairs(IconAssets.Files) do
+            IconAssets.Pending = IconAssets.Pending + 1
+            task.spawn(function()
+                local success, result = pcall(function()
+                    local path = IconAssets.CacheFolder .. "/" .. file
+                    local cached = isfile(path) and readfile(path) or ""
+                    if #cached == IconAssets.Bytes[name] and cached:sub(1, 8) == "\137PNG\13\10\26\10" then
+                        IconAssets.CacheHits = IconAssets.CacheHits + 1
+                    else
+                        local send = request or http_request or (syn and syn.request)
+                        local bytes
+                        if type(send) == "function" then
+                            local response = send({Url=IconAssets.BaseUrl .. file, Method="GET", Timeout=8})
+                            assert(response.StatusCode == 200, "Icon download failed: " .. tostring(response.StatusCode))
+                            bytes = response.Body
+                        else bytes = game:HttpGet(IconAssets.BaseUrl .. file) end
+                        assert(type(bytes) == "string" and #bytes == IconAssets.Bytes[name] and bytes:sub(1, 8) == "\137PNG\13\10\26\10", "Invalid icon PNG")
+                        writefile(path, bytes)
+                        IconAssets.DownloadCount = IconAssets.DownloadCount + 1
+                    end
+                    return getcustomasset(path)
+                end)
+                if success then IconAssets.Loaded[name] = result else IconAssets.Errors[name] = tostring(result) end
+                IconAssets.Pending = IconAssets.Pending - 1
+            end)
+        end
+    end
+    local started = os.clock()
+    while IconAssets.Pending > 0 and os.clock() - started < 10 do task.wait(0.03) end
+    return IconAssets.Pending == 0 and next(IconAssets.Errors) == nil
+end
+prepareIcons()
+
 local ShameHub = {}
+ShameHub.Assets = IconAssets
+ShameHub.PreloadIcons = prepareIcons
 local Window, Page, Tab, Section = {}, {}, {}, {}
 Window.__index, Page.__index, Tab.__index, Section.__index = Window, Page, Tab, Section
 
@@ -291,6 +355,11 @@ end
 local function drawIcon(parent, kind, color)
     if type(kind) == "string" and kind:match("^rbxasset") then
         return new("ImageLabel", { Name = "MenuIcon", Size = UDim2.fromOffset(16, 16), BackgroundTransparency = 1, Image = kind, ImageColor3 = color, ScaleType = Enum.ScaleType.Fit }, parent)
+    end
+    local asset = IconAssets.Loaded[kind] or (not IconAssets.Files[kind] and IconAssets.Loaded.Grid)
+    if asset then
+        return new("ImageLabel", { Name = kind .. "Icon", Size = UDim2.fromOffset(16, 16), BackgroundTransparency = 1,
+            Image = asset, ImageColor3 = color, ScaleType = Enum.ScaleType.Fit, ResampleMode = Enum.ResamplerMode.Default }, parent)
     end
     local icon = new("Frame", { Name = kind .. "Icon", Size = UDim2.fromOffset(16, 16), BackgroundTransparency = 1 }, parent)
     local function block(x, y, width, height)
