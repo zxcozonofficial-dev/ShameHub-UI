@@ -476,166 +476,30 @@ end
 function Window:_createProfileCard(profile)
     local t = self.Theme
     self.ProfileCard = new("Frame", {
-        Name = "ProfileCard", Position = UDim2.new(0, 8, 1, -124), Size = UDim2.new(1, -16, 0, 116),
+        Name = "ProfileCard", Position = UDim2.new(0, 8, 1, -88), Size = UDim2.new(1, -16, 0, 64),
         BackgroundColor3 = t.Sidebar, BackgroundTransparency = 1, ClipsDescendants = true,
     }, self.Sidebar)
-    self.Menu.Size = UDim2.new(1, -16, 1, -212)
-    local avatar = new("ImageLabel", {
-        Name = "Avatar", Position = UDim2.fromScale(0.5, 0), AnchorPoint = Vector2.new(0.5, 0), Size = UDim2.fromOffset(56, 58),
-        BackgroundColor3 = t.Raised, BackgroundTransparency = 1, Image = "", ScaleType = Enum.ScaleType.Fit,
-    }, self.ProfileCard)
-    self.ProfileAvatar = avatar
-    self.ProfileOnline = new("Frame", {
-        Name = "Online", Position = UDim2.new(0.5, 21, 0, 50), Size = UDim2.fromOffset(7, 7),
-        BackgroundColor3 = Color3.fromRGB(35, 205, 120),
-    }, self.ProfileCard)
-    corner(self.ProfileOnline, 8)
-    stroke(self.ProfileOnline, t.Sidebar)
+    self.Menu.Size = UDim2.new(1, -16, 1, -176)
     self.ProfileName = text(self.ProfileCard, "", {
-        Position = UDim2.fromOffset(0, 58), Size = UDim2.new(1, 0, 0, 18),
-        TextSize = 12, TextTruncate = Enum.TextTruncate.AtEnd,
+        Position = UDim2.fromOffset(0, 0), Size = UDim2.new(1, 0, 0, 18),
+        TextSize = 12, TextColor3 = t.Muted, TextTruncate = Enum.TextTruncate.AtEnd,
     })
     self.ProfileSubscription = text(self.ProfileCard, "", {
-        Position = UDim2.fromOffset(0, 78), Size = UDim2.new(1, 0, 0, 16), TextSize = 12,
+        Position = UDim2.fromOffset(0, 22), Size = UDim2.new(1, 0, 0, 16), TextSize = 12,
         TextColor3 = t.Text, RichText = true, TextTruncate = Enum.TextTruncate.AtEnd,
     })
     self.ProfileExpiry = text(self.ProfileCard, "", {
-        Position = UDim2.fromOffset(0, 96), Size = UDim2.new(1, 0, 0, 16), TextSize = 12,
-        TextColor3 = t.Muted, TextTruncate = Enum.TextTruncate.AtEnd,
+        Position = UDim2.fromOffset(0, 42), Size = UDim2.new(1, 0, 0, 16), TextSize = 12,
+        TextColor3 = t.Text, TextTruncate = Enum.TextTruncate.AtEnd,
     })
-    self.ProfileData = { Name = Players.LocalPlayer.Name, Subscription = "Free", ExpiresIn = 0, Online = true, Animated = true }
+    self.ProfileData = { Name = Players.LocalPlayer.Name, Subscription = "Free", ExpiresIn = 0 }
     self:SetProfile(profile)
-    task.spawn(function()
-        local ok, url = pcall(function()
-            return Players:GetUserThumbnailAsync(Players.LocalPlayer.UserId, Enum.ThumbnailType.AvatarThumbnail, Enum.ThumbnailSize.Size150x150)
-        end)
-        if not self.Dead and ok then avatar.Image = url end
-    end)
-    self.ProfileViewport = new("ViewportFrame", {
-        Name = "AnimatedProfileAvatar", Size = UDim2.fromOffset(56, 58), BackgroundTransparency = 1,
-        Ambient = Color3.fromRGB(200, 200, 200), LightColor = Color3.fromRGB(255, 255, 255),
-        LightDirection = Vector3.new(-1, -1, -1), Visible = false, ZIndex = 3,
-    }, self.Gui)
-    self.ProfileViewportDot = new("Frame", { Position = UDim2.new(1, -7, 1, -7), Size = UDim2.fromOffset(7, 7), BackgroundColor3 = self.ProfileOnline.BackgroundColor3, ZIndex = 4 }, self.ProfileViewport)
-    corner(self.ProfileViewportDot, 7)
-    local dotStroke = stroke(self.ProfileViewportDot, t.Sidebar)
-    self._SyncProfileViewport = function()
-        if self.Dead then return end
-        local ready = self.ProfileRigReady and self.ProfileData.Animated ~= false
-        self.ProfileViewport.Visible = ready and self.Root.Visible and self.Gui.Enabled
-        self.ProfileViewport.Position = UDim2.fromOffset(avatar.AbsolutePosition.X, avatar.AbsolutePosition.Y)
-        self.ProfileViewport.Size = UDim2.fromOffset(avatar.AbsoluteSize.X, avatar.AbsoluteSize.Y)
-        self.ProfileViewport.ImageTransparency = self.Root.GroupTransparency
-        self.ProfileViewportDot.BackgroundTransparency, dotStroke.Transparency = self.Root.GroupTransparency, self.Root.GroupTransparency
-        avatar.Visible, self.ProfileOnline.Visible = not ready, not ready
-        if self.ProfileTrack then self.ProfileTrack:AdjustSpeed(self.ProfileViewport.Visible and 1 or 0) end
-    end
-    for _, signal in ipairs({avatar:GetPropertyChangedSignal("AbsolutePosition"), avatar:GetPropertyChangedSignal("AbsoluteSize"), self.Root:GetPropertyChangedSignal("Visible"), self.Root:GetPropertyChangedSignal("GroupTransparency"), self.Gui:GetPropertyChangedSignal("Enabled")}) do
-        self:_connect(signal, self._SyncProfileViewport)
-    end
-    self:_loadProfileAvatar()
-end
-
-local function resolveAnimationAsset(assetId)
-    if type(assetId) == "string" and assetId:match("^rbxassetid://%d+$") then return assetId end
-    local id = tonumber(assetId)
-    assert(id and id > 0, "Invalid animation asset")
-    local objects = game:GetObjects("rbxassetid://" .. string.format("%.0f", id))
-    local animationId
-    for _, object in ipairs(objects) do
-        if object:IsA("Animation") then animationId = animationId or object.AnimationId end
-        for _, child in ipairs(object:GetDescendants()) do
-            if child:IsA("Animation") then animationId = animationId or child.AnimationId end
-        end
-        object:Destroy()
-    end
-    assert(animationId and animationId ~= "", "Animation asset did not contain an Animation")
-    return animationId
-end
-
-function Window:_releaseProfileRig()
-    self.ProfileRigReady = false
-    if self.ProfileTrack then self.ProfileTrack:Stop(0); self.ProfileTrack:Destroy(); self.ProfileTrack = nil end
-    if self.ProfileWorld then self.ProfileWorld:Destroy(); self.ProfileWorld = nil end
-    if self.ProfileCamera then self.ProfileCamera:Destroy(); self.ProfileCamera = nil end
-end
-
-function Window:_loadProfileAvatar()
-    self.ProfileGeneration = (self.ProfileGeneration or 0) + 1
-    local generation = self.ProfileGeneration
-    self:_releaseProfileRig()
-    self.ProfileAnimationState = "Loading"
-    self._SyncProfileViewport()
-    if self.ProfileData.Animated == false then self.ProfileAnimationState = "Static"; return end
-    task.spawn(function()
-        local rig, world, camera, track
-        local ok, err = pcall(function()
-            local description = Players:GetHumanoidDescriptionFromUserIdAsync(Players.LocalPlayer.UserId)
-            local emotes, equipped = description:GetEmotes(), description:GetEquippedEmotes()
-            table.sort(equipped, function(a, b) return a.Slot < b.Slot end)
-            local selected = self.ProfileData.Emote
-            if selected == nil and equipped[1] then selected = equipped[1].Name end
-            local source, selectedName
-            if self.ProfileData.AnimationId then
-                source, selectedName = "rbxassetid://" .. tostring(self.ProfileData.AnimationId):gsub("rbxassetid://", ""), "Custom animation"
-            elseif type(selected) == "number" then
-                source, selectedName = resolveAnimationAsset(selected), tostring(selected)
-            elseif type(selected) == "string" and emotes[selected] and emotes[selected][1] then
-                source, selectedName = resolveAnimationAsset(emotes[selected][1]), selected
-            else
-                source, selectedName = resolveAnimationAsset(description.IdleAnimation), "Avatar idle"
-            end
-            if self.Dead or generation ~= self.ProfileGeneration then return end
-            rig = Players:CreateHumanoidModelFromDescriptionAsync(description, Enum.HumanoidRigType.R15)
-            if self.Dead or generation ~= self.ProfileGeneration then rig:Destroy(); rig = nil; return end
-            for _, child in ipairs(rig:GetDescendants()) do
-                if child:IsA("LuaSourceContainer") then child:Destroy()
-                elseif child:IsA("BasePart") then child.CanCollide, child.CastShadow = false, false end
-            end
-            rig.HumanoidRootPart.Anchored = true
-            rig:PivotTo(CFrame.new())
-            world = Instance.new("WorldModel")
-            world.Parent = self.ProfileViewport
-            rig.Parent = world
-            camera = Instance.new("Camera")
-            camera.FieldOfView = 35
-            camera.Parent = self.ProfileViewport
-            local box, size = rig:GetBoundingBox()
-            local distance = math.max(size.Y, size.X / (56 / 58)) / (2 * math.tan(math.rad(35 / 2))) * 0.78
-            camera.CFrame = CFrame.lookAt(box.Position + Vector3.new(0, 0.1, -distance), box.Position)
-            self.ProfileViewport.CurrentCamera = camera
-            local humanoid = rig:FindFirstChildOfClass("Humanoid")
-            local animator = humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator", humanoid)
-            local animation = Instance.new("Animation")
-            animation.AnimationId = source
-            animation.Parent = rig
-            track = animator:LoadAnimation(animation)
-            track.Looped, track.Priority = true, Enum.AnimationPriority.Action
-            track:Play(0.15)
-            local started = os.clock()
-            while track.Length == 0 and os.clock() - started < 5 and not self.Dead and generation == self.ProfileGeneration do task.wait(0.05) end
-            assert(track.Length > 0, "Animation failed to load")
-            if self.Dead or generation ~= self.ProfileGeneration then return end
-            self.ProfileWorld, self.ProfileCamera, self.ProfileTrack = world, camera, track
-            self.ProfileRigReady, self.ProfileAnimationState, self.ProfileEmote = true, "Playing", selectedName
-            self._SyncProfileViewport()
-        end)
-        if not ok or self.Dead or generation ~= self.ProfileGeneration then
-            if track then pcall(function() track:Stop(0); track:Destroy() end) end
-            if world then world:Destroy() elseif rig then rig:Destroy() end
-            if camera then camera:Destroy() end
-            if not self.Dead and generation == self.ProfileGeneration then
-                self.ProfileAnimationState, self.ProfileAnimationError = "Static fallback", tostring(err)
-                self._SyncProfileViewport()
-            end
-        end
-    end)
 end
 
 function Window:SetProfile(profile)
     assert(type(profile) == "table", "Profile expects a table")
     if not self.ProfileCard then return end
-    for _, key in ipairs({"Name", "Subscription", "ExpiresIn", "Online", "Animated", "Emote", "AnimationId"}) do
+    for _, key in ipairs({"Name", "Subscription", "ExpiresIn"}) do
         if profile[key] ~= nil then self.ProfileData[key] = profile[key] end
     end
     local data = self.ProfileData
@@ -643,9 +507,6 @@ function Window:SetProfile(profile)
     self.ProfileName.Text = "username: " .. tostring(data.Name)
     self.ProfileSubscription.Text = '<font color="#' .. self.Theme.Muted:ToHex() .. '">Subscription:</font> ' .. subscription
     self.ProfileExpiry.Text = "Expires at: " .. tostring(data.ExpiresIn) .. " seconds"
-    self.ProfileOnline.BackgroundColor3 = data.Online and Color3.fromRGB(35, 205, 120) or self.Theme.Muted
-    if self.ProfileViewportDot then self.ProfileViewportDot.BackgroundColor3 = self.ProfileOnline.BackgroundColor3 end
-    if self.ProfileViewport and (profile.Animated ~= nil or profile.Emote ~= nil or profile.AnimationId ~= nil) then self:_loadProfileAvatar() end
 end
 
 function Window:_createWatermark(options)
@@ -783,7 +644,6 @@ end
 function Window:Destroy()
     if self.Dead then return end
     self.Dead = true
-    if self.ProfileViewport then self:_releaseProfileRig() end
     if self.BrandTween then self.BrandTween:Cancel() end
     for _, connection in ipairs(self.Connections) do connection:Disconnect() end
     table.clear(self.Connections)
