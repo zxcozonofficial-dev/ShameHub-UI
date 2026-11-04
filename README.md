@@ -147,3 +147,4 @@ API: `ListConfigs()` → names, error; `SaveConfig(name)`, `LoadConfig(name)`, `
 Внизу боковой панели отображаются аватар Roblox, имя игрока, индикатор статуса, Subscription и Expires at. По умолчанию Subscription=Free, ExpiresIn=0, Online=true. Это отображаемые данные интерфейса, а не проверка лицензии или подписки.
 
 Параметры: `CreateWindow({Profile={Name="Player",Subscription="Free",ExpiresIn=0,Online=true}})`. Имя без переопределения берётся из LocalPlayer.Name, аватар — AvatarBust текущего игрока. Данные можно обновить через `window:SetProfile({Subscription="Pro",ExpiresIn=3600})`. `Profile=false` отключает карточку. Список страниц заканчивается выше карточки и не перекрывает её.
+Карточка профиля компактная: высота 74 px, без отдельного фона и обводки. Ник 14 px, подписи 12 px; фон совпадает с боковой панелью.

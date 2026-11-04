@@ -476,34 +476,32 @@ end
 function Window:_createProfileCard(profile)
     local t = self.Theme
     self.ProfileCard = new("Frame", {
-        Name = "ProfileCard", Position = UDim2.new(0, 8, 1, -100), Size = UDim2.new(1, -16, 0, 92),
-        BackgroundColor3 = t.Panel, ClipsDescendants = true,
+        Name = "ProfileCard", Position = UDim2.new(0, 8, 1, -82), Size = UDim2.new(1, -16, 0, 74),
+        BackgroundColor3 = t.Sidebar, BackgroundTransparency = 1, ClipsDescendants = true,
     }, self.Sidebar)
-    corner(self.ProfileCard, 7)
-    stroke(self.ProfileCard, t.Border)
-    self.Menu.Size = UDim2.new(1, -16, 1, -188)
+    self.Menu.Size = UDim2.new(1, -16, 1, -170)
     local avatar = new("ImageLabel", {
-        Name = "Avatar", Position = UDim2.fromOffset(8, 9), Size = UDim2.fromOffset(32, 32),
+        Name = "Avatar", Position = UDim2.fromOffset(0, 3), Size = UDim2.fromOffset(28, 28),
         BackgroundColor3 = t.Raised, Image = "", ScaleType = Enum.ScaleType.Crop,
     }, self.ProfileCard)
     corner(avatar, 32)
     stroke(avatar, t.Border)
     self.ProfileOnline = new("Frame", {
-        Name = "Online", Position = UDim2.fromOffset(33, 34), Size = UDim2.fromOffset(8, 8),
+        Name = "Online", Position = UDim2.fromOffset(21, 24), Size = UDim2.fromOffset(7, 7),
         BackgroundColor3 = Color3.fromRGB(35, 205, 120),
     }, self.ProfileCard)
     corner(self.ProfileOnline, 8)
-    stroke(self.ProfileOnline, t.Panel)
+    stroke(self.ProfileOnline, t.Sidebar)
     self.ProfileName = text(self.ProfileCard, "", {
-        Position = UDim2.fromOffset(47, 9), Size = UDim2.new(1, -53, 0, 32),
-        TextSize = 13, TextTruncate = Enum.TextTruncate.AtEnd,
+        Position = UDim2.fromOffset(36, 2), Size = UDim2.new(1, -36, 0, 30),
+        TextSize = 14, TextTruncate = Enum.TextTruncate.AtEnd,
     })
     self.ProfileSubscription = text(self.ProfileCard, "", {
-        Position = UDim2.fromOffset(8, 49), Size = UDim2.new(1, -16, 0, 16), TextSize = 11,
+        Position = UDim2.fromOffset(0, 37), Size = UDim2.new(1, 0, 0, 16), TextSize = 12,
         TextColor3 = t.Text, RichText = true, TextTruncate = Enum.TextTruncate.AtEnd,
     })
     self.ProfileExpiry = text(self.ProfileCard, "", {
-        Position = UDim2.fromOffset(8, 68), Size = UDim2.new(1, -16, 0, 16), TextSize = 11,
+        Position = UDim2.fromOffset(0, 55), Size = UDim2.new(1, 0, 0, 16), TextSize = 12,
         TextColor3 = t.Muted, TextTruncate = Enum.TextTruncate.AtEnd,
     })
     self.ProfileData = { Name = Players.LocalPlayer.Name, Subscription = "Free", ExpiresIn = 0, Online = true }
