@@ -481,12 +481,12 @@ function Window:_createProfileCard(profile)
     }, self.Sidebar)
     self.Menu.Size = UDim2.new(1, -16, 1, -212)
     local avatar = new("ImageLabel", {
-        Name = "Avatar", Position = UDim2.fromScale(0.5, 0), AnchorPoint = Vector2.new(0.5, 0), Size = UDim2.fromOffset(48, 54),
+        Name = "Avatar", Position = UDim2.fromScale(0.5, 0), AnchorPoint = Vector2.new(0.5, 0), Size = UDim2.fromOffset(56, 58),
         BackgroundColor3 = t.Raised, BackgroundTransparency = 1, Image = "", ScaleType = Enum.ScaleType.Fit,
     }, self.ProfileCard)
     self.ProfileAvatar = avatar
     self.ProfileOnline = new("Frame", {
-        Name = "Online", Position = UDim2.new(0.5, 17, 0, 47), Size = UDim2.fromOffset(7, 7),
+        Name = "Online", Position = UDim2.new(0.5, 21, 0, 50), Size = UDim2.fromOffset(7, 7),
         BackgroundColor3 = Color3.fromRGB(35, 205, 120),
     }, self.ProfileCard)
     corner(self.ProfileOnline, 8)
@@ -512,7 +512,7 @@ function Window:_createProfileCard(profile)
         if not self.Dead and ok then avatar.Image = url end
     end)
     self.ProfileViewport = new("ViewportFrame", {
-        Name = "AnimatedProfileAvatar", Size = UDim2.fromOffset(48, 54), BackgroundTransparency = 1,
+        Name = "AnimatedProfileAvatar", Size = UDim2.fromOffset(56, 58), BackgroundTransparency = 1,
         Ambient = Color3.fromRGB(200, 200, 200), LightColor = Color3.fromRGB(255, 255, 255),
         LightDirection = Vector3.new(-1, -1, -1), Visible = false, ZIndex = 3,
     }, self.Gui)
@@ -601,7 +601,7 @@ function Window:_loadProfileAvatar()
             camera.FieldOfView = 35
             camera.Parent = self.ProfileViewport
             local box, size = rig:GetBoundingBox()
-            local distance = math.max(size.Y, size.X / (48 / 54)) / (2 * math.tan(math.rad(35 / 2))) * 1.18
+            local distance = math.max(size.Y, size.X / (56 / 58)) / (2 * math.tan(math.rad(35 / 2))) * 0.78
             camera.CFrame = CFrame.lookAt(box.Position + Vector3.new(0, 0.1, -distance), box.Position)
             self.ProfileViewport.CurrentCamera = camera
             local humanoid = rig:FindFirstChildOfClass("Humanoid")
