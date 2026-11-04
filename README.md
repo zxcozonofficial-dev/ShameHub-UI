@@ -146,5 +146,13 @@ API: `ListConfigs()` → names, error; `SaveConfig(name)`, `LoadConfig(name)`, `
 
 Внизу боковой панели отображаются аватар Roblox, имя игрока, индикатор статуса, Subscription и Expires at. По умолчанию Subscription=Free, ExpiresIn=0, Online=true. Это отображаемые данные интерфейса, а не проверка лицензии или подписки.
 
-Параметры: `CreateWindow({Profile={Name="Player",Subscription="Free",ExpiresIn=0,Online=true}})`. Имя без переопределения берётся из LocalPlayer.Name, аватар — AvatarBust текущего игрока. Данные можно обновить через `window:SetProfile({Subscription="Pro",ExpiresIn=3600})`. `Profile=false` отключает карточку. Список страниц заканчивается выше карточки и не перекрывает её.
-Карточка профиля компактная: высота 74 px, без отдельного фона и обводки. Ник 14 px, подписи 12 px; фон совпадает с боковой панелью.
+Параметры: `CreateWindow({Profile={Name="Player",Subscription="Free",ExpiresIn=0,Online=true}})`. Имя без переопределения берётся из LocalPlayer.Name, аватар строится из текущего наряда Roblox. Данные можно обновить через `window:SetProfile({Subscription="Pro",ExpiresIn=3600})`. `Profile=false` отключает карточку. Список страниц заканчивается выше карточки и не перекрывает её.
+Карточка профиля без отдельного фона и обводки; увеличенное 3D-превью размещено рядом с ником. Ник 14 px, подписи 12 px; фон совпадает с боковой панелью.
+
+## Анимированный аватар
+
+Аватар увеличен до 48×54 px и отображается как отдельная R15-модель в ViewportFrame/WorldModel. Наряд берётся из HumanoidDescription текущего пользователя. По умолчанию воспроизводится эмоция из первого экипированного слота; если её нет, используется idle аватара. Конкретный выбор позы для снимка профиля не доступен через публичный пользовательский API и не запрашивается через cookies.
+
+Явный выбор: `Profile={Emote="Zombie Idle"}` (имя экипированной эмоции), `Profile={Emote=111326198240592}` (catalog asset ID) или `Profile={AnimationId="rbxassetid://138503654818181"}` (готовый animation ID). `Profile={Animated=false}` оставляет статичную миниатюру. У клона свой Animator; персонаж в игре не меняется. Если анимация недоступна, остаётся обычная миниатюра Roblox.
+
+При скрытии меню анимация приостанавливается. Прозрачность меню применяется и к 3D-превью. ViewportFrame размещён вне CanvasGroup и следует за аватарным слотом, чтобы избежать зависания анимации внутри CanvasGroup. Диагностика: window.ProfileAnimationState, ProfileAnimationError, ProfileEmote. Destroy удаляет модель и останавливает трек. Получение catalog animation использует GetObjects в поддерживающих его клиентах; для других окружений можно передать прямой AnimationId.
