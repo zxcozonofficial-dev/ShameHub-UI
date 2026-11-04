@@ -128,3 +128,8 @@ API: `ListConfigs()` → names, error; `SaveConfig(name)`, `LoadConfig(name)`, `
 Нижняя подпись всегда показывает `ShameHub / Version Dev`. Версия задаётся параметром `CreateWindow({Version="1.0"})` или методом `window:SetVersion("1.0")`. Операционные сообщения не заменяют эту строку: SetStatus сохраняет LastStatus и вызывает необязательный OnStatus callback.
 
 В примере General содержит один пустой таб Interface. Настройки интерфейса остаются в Settings. В Settings → Controls нажми Menu key и затем нужную клавишу; Escape отменяет назначение. По умолчанию RightShift. Назначение сохраняется в конфиге. API: `window:SetToggleKey(Enum.KeyCode.Insert)` или `window:SetToggleKey("Insert")`; подсказка в нижней панели обновляется автоматически. При вводе текста меню на клавишу не реагирует.
+## Иконки меню
+
+Страницы и вкладки автоматически получают встроенные иконки по названию: General — Grid, Settings — Settings, About — Info, Interface — Layout, Appearance — Palette, Controls — Keyboard, Config — Folder, Library — Book. Они рисуются UI-фигурами и работают без внешних картинок. Активная иконка использует цвет акцента; отступы для значка, кружка выбора и текста разделены.
+
+Своя иконка: `window:AddPage({Title="Custom", Icon="Settings"})` или `page:AddTab("Main", {Icon="Layout"})`. Также доступны Monitor, Network, Gamepad. Можно передать `Icon="rbxassetid://..."` для ImageLabel или `Icon=false`, чтобы оставить только текст и индикатор выбора. Неизвестное встроенное имя отображается как Grid.

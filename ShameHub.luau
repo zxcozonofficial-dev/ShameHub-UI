@@ -288,7 +288,10 @@ function Window:SetVisible(visible)
     end
 end
 
-local function watermarkIcon(parent, kind, color)
+local function drawIcon(parent, kind, color)
+    if type(kind) == "string" and kind:match("^rbxasset") then
+        return new("ImageLabel", { Name = "MenuIcon", Size = UDim2.fromOffset(16, 16), BackgroundTransparency = 1, Image = kind, ImageColor3 = color, ScaleType = Enum.ScaleType.Fit }, parent)
+    end
     local icon = new("Frame", { Name = kind .. "Icon", Size = UDim2.fromOffset(16, 16), BackgroundTransparency = 1 }, parent)
     local function block(x, y, width, height)
         return new("Frame", { Position = UDim2.fromOffset(x, y), Size = UDim2.fromOffset(width, height), BackgroundColor3 = color }, icon)
@@ -313,8 +316,89 @@ local function watermarkIcon(parent, kind, color)
         corner(block(13, 10, 2, 2), 2)
         block(3, 2, 3, 1)
         block(10, 2, 3, 1)
+    elseif kind == "Settings" then
+        local ring = block(3, 3, 10, 10)
+        ring.BackgroundTransparency = 1
+        corner(ring, 10)
+        stroke(ring, color)
+        local center = block(6, 6, 4, 4)
+        center.BackgroundTransparency = 1
+        corner(center, 4)
+        stroke(center, color)
+        for i = 0, 7 do
+            local angle = math.rad(i * 45)
+            local tooth = block(8 + math.cos(angle) * 6.5, 8 + math.sin(angle) * 6.5, 3, 2)
+            tooth.AnchorPoint = Vector2.new(0.5, 0.5)
+            tooth.Rotation = i * 45
+        end
+    elseif kind == "Info" then
+        local ring = block(1, 1, 14, 14)
+        ring.BackgroundTransparency = 1
+        corner(ring, 14)
+        stroke(ring, color)
+        corner(block(7, 4, 2, 2), 2)
+        corner(block(7, 8, 2, 4), 1)
+    elseif kind == "Palette" then
+        local ring = block(1, 1, 14, 14)
+        ring.BackgroundTransparency = 1
+        corner(ring, 14)
+        stroke(ring, color)
+        for _, point in ipairs({{5,4},{10,4},{3,9},{8,10}}) do corner(block(point[1],point[2],2,2),2) end
+    elseif kind == "Keyboard" then
+        local body = block(0, 3, 16, 11)
+        body.BackgroundTransparency = 1
+        corner(body, 2)
+        stroke(body, color)
+        for x = 3, 12, 3 do block(x, 6, 1, 1); block(x, 9, 1, 1) end
+        block(5, 12, 6, 1)
+    elseif kind == "Folder" then
+        local body = block(1, 5, 14, 9)
+        body.BackgroundTransparency = 1
+        corner(body, 2)
+        stroke(body, color)
+        block(2, 2, 5, 2)
+        block(1, 3, 1, 3)
+    elseif kind == "Book" then
+        for _, x in ipairs({1,9}) do
+            local page = block(x, 2, 6, 12)
+            page.BackgroundTransparency = 1
+            corner(page, 1)
+            stroke(page, color)
+        end
+        block(8, 3, 1, 12)
+    elseif kind == "Layout" then
+        local body = block(1, 1, 14, 14)
+        body.BackgroundTransparency = 1
+        corner(body, 2)
+        stroke(body, color)
+        block(2, 5, 12, 1)
+        block(6, 6, 1, 8)
+    else
+        for _, point in ipairs({{1,1},{9,1},{1,9},{9,9}}) do
+            local cell = block(point[1], point[2], 6, 6)
+            cell.BackgroundTransparency = 1
+            corner(cell, 1)
+            stroke(cell, color)
+        end
     end
     return icon
+end
+
+local function paintIcon(icon, color)
+    if not icon then return end
+    if icon:IsA("ImageLabel") then icon.ImageColor3 = color end
+    for _, item in ipairs(icon:GetDescendants()) do
+        if item:IsA("UIStroke") then item.Color = color
+        elseif item:IsA("Frame") and item.BackgroundTransparency < 1 then item.BackgroundColor3 = color end
+    end
+end
+
+function Window:_registerIcon(icon, resolve)
+    if icon:IsA("ImageLabel") then self:_accent(icon, "ImageColor3", resolve) end
+    for _, item in ipairs(icon:GetDescendants()) do
+        if item:IsA("UIStroke") then self:_accent(item, "Color", resolve)
+        elseif item:IsA("Frame") and item.BackgroundTransparency < 1 then self:_accent(item, "BackgroundColor3", resolve) end
+    end
 end
 
 function Window:_createWatermark(options)
@@ -351,7 +435,7 @@ function Window:_createWatermark(options)
         local group = new("Frame", { Name = field[1], Size = UDim2.fromOffset(0, 20), AutomaticSize = Enum.AutomaticSize.X, BackgroundTransparency = 1 }, row)
         local inner = list(group, 6, true)
         inner.VerticalAlignment = Enum.VerticalAlignment.Center
-        if field[2] then watermarkIcon(group, field[2], self.Theme.Text) end
+        if field[2] then drawIcon(group, field[2], self.Theme.Text) end
         self.WatermarkFields[field[1]] = text(group, "", {
             Size = UDim2.fromOffset(60, 20), TextSize = 14, TextColor3 = self.Theme.Text, TextTruncate = Enum.TextTruncate.AtEnd,
             TextYAlignment = Enum.TextYAlignment.Center,
@@ -464,11 +548,20 @@ function Window:AddPage(options)
     local page = setmetatable({ Window = self, Tabs = {} }, Page)
     page.Button = self:_button(self.Menu, "", { Size = UDim2.new(1, 0, 0, 28), BackgroundColor3 = self.Theme.Sidebar })
     page.Button:FindFirstChildOfClass("UICorner").CornerRadius = UDim.new(0, 5)
-    page.Label = text(page.Button, options.Title or "Page", { Position = UDim2.fromOffset(24, 0), Size = UDim2.new(1, -30, 1, 0), TextColor3 = self.Theme.Text })
-    page.Marker = new("Frame", { Position = UDim2.new(0, 10, 0.5, 0), AnchorPoint = Vector2.new(0.5, 0.5), Size = UDim2.fromOffset(6, 6), BackgroundColor3 = self.Theme.Accent, Visible = false }, page.Button)
+    local title = options.Title or "Page"
+    local kind = options.Icon
+    if kind == nil then kind = ({general="Grid", settings="Settings", about="Info"})[title:lower()] or "Grid" end
+    local labelX = kind == false and 24 or 40
+    page.Label = text(page.Button, title, { Position = UDim2.fromOffset(labelX, 0), Size = UDim2.new(1, -labelX - 6, 1, 0), TextColor3 = self.Theme.Text, TextTruncate = Enum.TextTruncate.AtEnd })
+    page.Marker = new("Frame", { Position = UDim2.new(0, 7, 0.5, 0), AnchorPoint = Vector2.new(0.5, 0.5), Size = UDim2.fromOffset(4, 4), BackgroundColor3 = self.Theme.Accent, Visible = false }, page.Button)
     corner(page.Marker, 6)
     self:_accent(page.Marker, "BackgroundColor3")
     page.Frame = new("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Visible = false }, self.Body)
+    if kind ~= false then
+        page.Icon = drawIcon(page.Button, kind, self.Theme.Muted)
+        page.Icon.Position, page.Icon.AnchorPoint = UDim2.new(0, 17, 0.5, 0), Vector2.new(0, 0.5)
+        self:_registerIcon(page.Icon, function() return page.Frame.Visible and self.Theme.Accent or self.Theme.Muted end)
+    end
     page.Bar = new("ScrollingFrame", {
         Size = UDim2.new(1, 0, 0, 36), BackgroundTransparency = 1, ScrollBarThickness = 0,
         AutomaticCanvasSize = Enum.AutomaticSize.X, CanvasSize = UDim2.new(), ScrollingDirection = Enum.ScrollingDirection.X,
@@ -488,15 +581,25 @@ function Page:Select()
         tween(page.Button, { BackgroundColor3 = active and self.Window.Theme.Raised or self.Window.Theme.Sidebar,
             TextColor3 = active and self.Window.Theme.Text or self.Window.Theme.Muted })
         tween(page.Label, { TextColor3 = active and self.Window.Theme.Text or self.Window.Theme.Muted })
+        paintIcon(page.Icon, active and self.Window.Theme.Accent or self.Window.Theme.Muted)
     end
 end
 
-function Page:AddTab(title)
+function Page:AddTab(title, options)
+    options = options or {}
     local w = self.Window
     local tab = setmetatable({ Window = w, Page = self }, Tab)
-    tab.Button = w:_button(self.Bar, "", { Size = UDim2.fromOffset(124, 30), BackgroundColor3 = w.Theme.Background })
-    tab.Label = text(tab.Button, title, { Position = UDim2.fromOffset(24, 0), Size = UDim2.new(1, -30, 1, 0), TextColor3 = w.Theme.Text })
-    tab.Line = new("Frame", { Position = UDim2.new(0, 11, 0.5, 0), AnchorPoint = Vector2.new(0.5, 0.5), Size = UDim2.fromOffset(6, 6), BackgroundColor3 = w.Theme.Accent, Visible = false }, tab.Button)
+    local kind = options.Icon
+    if kind == nil then kind = ({interface="Layout",main="Layout",appearance="Palette",controls="Keyboard",config="Folder",library="Book"})[title:lower()] or "Layout" end
+    local labelX = kind == false and 24 or 40
+    local params = Instance.new("GetTextBoundsParams")
+    params.Text, params.Font, params.Size, params.Width = title, BoldFont, 17, 1000
+    local ok, bounds = pcall(TextService.GetTextBoundsAsync, TextService, params)
+    params:Destroy()
+    local width = math.clamp((ok and math.ceil(bounds.X) or 80) + labelX + 10, 108, 220)
+    tab.Button = w:_button(self.Bar, "", { Size = UDim2.fromOffset(width, 30), BackgroundColor3 = w.Theme.Background })
+    tab.Label = text(tab.Button, title, { Position = UDim2.fromOffset(labelX, 0), Size = UDim2.new(1, -labelX - 8, 1, 0), TextColor3 = w.Theme.Text, TextTruncate = Enum.TextTruncate.AtEnd })
+    tab.Line = new("Frame", { Position = UDim2.new(0, 7, 0.5, 0), AnchorPoint = Vector2.new(0.5, 0.5), Size = UDim2.fromOffset(4, 4), BackgroundColor3 = w.Theme.Accent, Visible = false }, tab.Button)
     corner(tab.Line, 6)
     w:_accent(tab.Line, "BackgroundColor3")
     tab.Scroll = new("ScrollingFrame", {
@@ -504,6 +607,11 @@ function Page:AddTab(title)
         AutomaticCanvasSize = Enum.AutomaticSize.Y, CanvasSize = UDim2.new(), ScrollBarThickness = 3,
         ScrollBarImageColor3 = w.Theme.Accent, Visible = false,
     }, self.Frame)
+    if kind ~= false then
+        tab.Icon = drawIcon(tab.Button, kind, w.Theme.Muted)
+        tab.Icon.Position, tab.Icon.AnchorPoint = UDim2.new(0, 17, 0.5, 0), Vector2.new(0, 0.5)
+        w:_registerIcon(tab.Icon, function() return tab.Scroll.Visible and w.Theme.Accent or w.Theme.Muted end)
+    end
     w:_accent(tab.Scroll, "ScrollBarImageColor3")
     local canvas = new("Frame", { Size = UDim2.new(1, -8, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1 }, tab.Scroll)
     list(canvas, 12)
@@ -527,6 +635,7 @@ function Tab:Select()
         tween(tab.Button, { BackgroundColor3 = active and self.Window.Theme.Raised or self.Window.Theme.Background,
             TextColor3 = active and self.Window.Theme.Text or self.Window.Theme.Muted })
         tween(tab.Label, { TextColor3 = active and self.Window.Theme.Text or self.Window.Theme.Muted })
+        paintIcon(tab.Icon, active and self.Window.Theme.Accent or self.Window.Theme.Muted)
     end
 end
 
