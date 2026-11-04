@@ -490,7 +490,7 @@ function Window:_createProfileCard(profile)
     })
     self.ProfileExpiry = text(self.ProfileCard, "", {
         Position = UDim2.fromOffset(0, 34), Size = UDim2.new(1, 0, 0, 16), TextSize = 12,
-        TextColor3 = t.Text, TextTruncate = Enum.TextTruncate.AtEnd,
+        TextColor3 = t.Text, RichText = true, TextTruncate = Enum.TextTruncate.AtEnd,
     })
     self.ProfileData = { Name = Players.LocalPlayer.Name, Subscription = "Free", ExpiresIn = 0 }
     self:SetProfile(profile)
@@ -507,7 +507,8 @@ function Window:SetProfile(profile)
     local profileName = tostring(data.Name):gsub("&", "&amp;"):gsub("<", "&lt;"):gsub(">", "&gt;")
     self.ProfileName.Text = '<font color="#' .. self.Theme.Muted:ToHex() .. '">username:</font> ' .. profileName
     self.ProfileSubscription.Text = '<font color="#' .. self.Theme.Muted:ToHex() .. '">Subscription:</font> ' .. subscription
-    self.ProfileExpiry.Text = "Expires at: " .. tostring(data.ExpiresIn) .. " seconds"
+    local expiry = tostring(data.ExpiresIn):gsub("&", "&amp;"):gsub("<", "&lt;"):gsub(">", "&gt;")
+    self.ProfileExpiry.Text = '<font color="#' .. self.Theme.Muted:ToHex() .. '">Expires at:</font> ' .. expiry .. " seconds"
 end
 
 function Window:_createWatermark(options)
