@@ -1,0 +1,14 @@
+{
+  "name": "ShameHub",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "ShameHub": { "$path": "ShameHub.luau" }
+    },
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "ShameHubExample": { "$path": "Example.client.luau" }
+      }
+    }
+  }
+}

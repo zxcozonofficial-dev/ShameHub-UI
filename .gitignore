@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+*.rbxl
+*.rbxlx
+*.log
+*.config
+.autoload
+configs/
