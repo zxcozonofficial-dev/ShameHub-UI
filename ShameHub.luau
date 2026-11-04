@@ -476,20 +476,20 @@ end
 function Window:_createProfileCard(profile)
     local t = self.Theme
     self.ProfileCard = new("Frame", {
-        Name = "ProfileCard", Position = UDim2.new(0, 8, 1, -88), Size = UDim2.new(1, -16, 0, 64),
+        Name = "ProfileCard", Position = UDim2.new(0, 8, 1, -88), Size = UDim2.new(1, -16, 0, 80),
         BackgroundColor3 = t.Sidebar, BackgroundTransparency = 1, ClipsDescendants = true,
     }, self.Sidebar)
     self.Menu.Size = UDim2.new(1, -16, 1, -176)
     self.ProfileName = text(self.ProfileCard, "", {
-        Position = UDim2.fromOffset(0, 0), Size = UDim2.new(1, 0, 0, 18),
-        TextSize = 12, TextColor3 = t.Muted, TextTruncate = Enum.TextTruncate.AtEnd,
+        Position = UDim2.fromOffset(0, 14), Size = UDim2.new(1, 0, 0, 18),
+        TextSize = 12, TextColor3 = t.Text, RichText = true, TextTruncate = Enum.TextTruncate.AtEnd,
     })
     self.ProfileSubscription = text(self.ProfileCard, "", {
-        Position = UDim2.fromOffset(0, 22), Size = UDim2.new(1, 0, 0, 16), TextSize = 12,
+        Position = UDim2.fromOffset(0, 36), Size = UDim2.new(1, 0, 0, 16), TextSize = 12,
         TextColor3 = t.Text, RichText = true, TextTruncate = Enum.TextTruncate.AtEnd,
     })
     self.ProfileExpiry = text(self.ProfileCard, "", {
-        Position = UDim2.fromOffset(0, 42), Size = UDim2.new(1, 0, 0, 16), TextSize = 12,
+        Position = UDim2.fromOffset(0, 56), Size = UDim2.new(1, 0, 0, 16), TextSize = 12,
         TextColor3 = t.Text, TextTruncate = Enum.TextTruncate.AtEnd,
     })
     self.ProfileData = { Name = Players.LocalPlayer.Name, Subscription = "Free", ExpiresIn = 0 }
@@ -504,7 +504,8 @@ function Window:SetProfile(profile)
     end
     local data = self.ProfileData
     local subscription = tostring(data.Subscription):gsub("&", "&amp;"):gsub("<", "&lt;"):gsub(">", "&gt;")
-    self.ProfileName.Text = "username: " .. tostring(data.Name)
+    local profileName = tostring(data.Name):gsub("&", "&amp;"):gsub("<", "&lt;"):gsub(">", "&gt;")
+    self.ProfileName.Text = '<font color="#' .. self.Theme.Muted:ToHex() .. '">username:</font> ' .. profileName
     self.ProfileSubscription.Text = '<font color="#' .. self.Theme.Muted:ToHex() .. '">Subscription:</font> ' .. subscription
     self.ProfileExpiry.Text = "Expires at: " .. tostring(data.ExpiresIn) .. " seconds"
 end
