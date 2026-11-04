@@ -1,0 +1,62 @@
+{
+  "version": "lucide-0.468.0-v2",
+  "strokeWidth": 2.5,
+  "source": "https://github.com/lucide-icons/lucide",
+  "icons": {
+    "Grid": {
+      "file": "layout-grid.png",
+      "sha256": "76693a9eb1165a03b286b05aea13e42c5a97020d475640a29d6e4ae09bab50bc",
+      "bytes": 1503
+    },
+    "Settings": {
+      "file": "settings.png",
+      "sha256": "891373b03ce395a82c6064773a9e9e1908c3bc280eb38e5093d84170860da687",
+      "bytes": 3043
+    },
+    "Info": {
+      "file": "info.png",
+      "sha256": "478809d678f46bd3d5ac5afc6c57771200632879410fd452c3342bfbbe537d2e",
+      "bytes": 2591
+    },
+    "Layout": {
+      "file": "panels-top-left.png",
+      "sha256": "3478e948da8cf88f6d6b9295c848818d70878f469339113317de112b7cfd73e7",
+      "bytes": 1411
+    },
+    "Palette": {
+      "file": "palette.png",
+      "sha256": "706d692d39189b09a84f6af1a2baa3d5fc75da32d95cb4c0f8a3208dc0c4b98d",
+      "bytes": 3299
+    },
+    "Keyboard": {
+      "file": "keyboard.png",
+      "sha256": "32518ea29c82a2991e4de6a0227e4e12c3347abc4b8e821393a21fe43ba8d9e9",
+      "bytes": 1591
+    },
+    "Folder": {
+      "file": "folder.png",
+      "sha256": "03499dccdd80c59df8bdcd58aa73e0bd6e03a828968572778477208a55a830a3",
+      "bytes": 1354
+    },
+    "Book": {
+      "file": "book-open.png",
+      "sha256": "eb633a5adaad2315e7a35fb6a9ac4a20b9472d89747d941f880d57bf3ee3c68a",
+      "bytes": 1537
+    },
+    "Monitor": {
+      "file": "monitor.png",
+      "sha256": "69a2b45478b4d42a9855f62ecd950c5bfa442dcf634c6c1630574f2598db59f2",
+      "bytes": 1232
+    },
+    "Network": {
+      "file": "wifi.png",
+      "sha256": "78ea5b50375c8db15470e26c472c0ce1353e66900a50f674b2180f07f2261102",
+      "bytes": 1886
+    },
+    "Gamepad": {
+      "file": "gamepad-2.png",
+      "sha256": "516ffca9871200af4c0f2074b292875b6c1a3d2a92d54475e5bf084cd9786151",
+      "bytes": 2293
+    }
+  }
+}

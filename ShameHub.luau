@@ -35,15 +35,15 @@ end
 local BoldFont, TypefaceName = loadTypeface()
 
 local IconAssets = {
-    Version = "lucide-0.468.0-v1",
-    BaseUrl = "https://raw.githubusercontent.com/zxcozonofficial-dev/ShameHub-UI/main/assets/icons/",
-    CacheFolder = "ShameHub/assets/icons/lucide-0.468.0-v1",
+    Version = "lucide-0.468.0-v2",
+    BaseUrl = "https://raw.githubusercontent.com/zxcozonofficial-dev/ShameHub-UI/main/assets/icons/v2/",
+    CacheFolder = "ShameHub/assets/icons/lucide-0.468.0-v2",
     Files = {
         Grid = "layout-grid.png", Settings = "settings.png", Info = "info.png", Layout = "panels-top-left.png",
         Palette = "palette.png", Keyboard = "keyboard.png", Folder = "folder.png", Book = "book-open.png",
         Monitor = "monitor.png", Network = "wifi.png", Gamepad = "gamepad-2.png",
     },
-    Bytes = { Grid=1422, Settings=3087, Info=2529, Layout=1406, Palette=2928, Keyboard=1479, Folder=1359, Book=1544, Monitor=1220, Network=1782, Gamepad=2213 },
+    Bytes = { Grid=1503, Settings=3043, Info=2591, Layout=1411, Palette=3299, Keyboard=1591, Folder=1354, Book=1537, Monitor=1232, Network=1886, Gamepad=2293 },
     Loaded = {}, Errors = {}, DownloadCount = 0, CacheHits = 0, Pending = 0,
 }
 
@@ -110,6 +110,7 @@ local palette = {
     Border = Color3.fromRGB(32, 32, 37),
     Text = Color3.fromRGB(220, 220, 228),
     Muted = Color3.fromRGB(133, 133, 145),
+    IconMuted = Color3.fromRGB(190, 190, 202),
     Accent = Color3.fromRGB(255, 255, 255),
 }
 
@@ -627,9 +628,10 @@ function Window:AddPage(options)
     self:_accent(page.Marker, "BackgroundColor3")
     page.Frame = new("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Visible = false }, self.Body)
     if kind ~= false then
-        page.Icon = drawIcon(page.Button, kind, self.Theme.Muted)
-        page.Icon.Position, page.Icon.AnchorPoint = UDim2.new(0, 17, 0.5, 0), Vector2.new(0, 0.5)
-        self:_registerIcon(page.Icon, function() return page.Frame.Visible and self.Theme.Accent or self.Theme.Muted end)
+        page.Icon = drawIcon(page.Button, kind, self.Theme.IconMuted)
+        page.Icon.Size = UDim2.fromOffset(20, 20)
+        page.Icon.Position, page.Icon.AnchorPoint = UDim2.new(0, 15, 0.5, 0), Vector2.new(0, 0.5)
+        self:_registerIcon(page.Icon, function() return page.Frame.Visible and self.Theme.Accent or self.Theme.IconMuted end)
     end
     page.Bar = new("ScrollingFrame", {
         Size = UDim2.new(1, 0, 0, 36), BackgroundTransparency = 1, ScrollBarThickness = 0,
@@ -650,7 +652,7 @@ function Page:Select()
         tween(page.Button, { BackgroundColor3 = active and self.Window.Theme.Raised or self.Window.Theme.Sidebar,
             TextColor3 = active and self.Window.Theme.Text or self.Window.Theme.Muted })
         tween(page.Label, { TextColor3 = active and self.Window.Theme.Text or self.Window.Theme.Muted })
-        paintIcon(page.Icon, active and self.Window.Theme.Accent or self.Window.Theme.Muted)
+        paintIcon(page.Icon, active and self.Window.Theme.Accent or self.Window.Theme.IconMuted)
     end
 end
 
@@ -677,9 +679,10 @@ function Page:AddTab(title, options)
         ScrollBarImageColor3 = w.Theme.Accent, Visible = false,
     }, self.Frame)
     if kind ~= false then
-        tab.Icon = drawIcon(tab.Button, kind, w.Theme.Muted)
-        tab.Icon.Position, tab.Icon.AnchorPoint = UDim2.new(0, 17, 0.5, 0), Vector2.new(0, 0.5)
-        w:_registerIcon(tab.Icon, function() return tab.Scroll.Visible and w.Theme.Accent or w.Theme.Muted end)
+        tab.Icon = drawIcon(tab.Button, kind, w.Theme.IconMuted)
+        tab.Icon.Size = UDim2.fromOffset(20, 20)
+        tab.Icon.Position, tab.Icon.AnchorPoint = UDim2.new(0, 15, 0.5, 0), Vector2.new(0, 0.5)
+        w:_registerIcon(tab.Icon, function() return tab.Scroll.Visible and w.Theme.Accent or w.Theme.IconMuted end)
     end
     w:_accent(tab.Scroll, "ScrollBarImageColor3")
     local canvas = new("Frame", { Size = UDim2.new(1, -8, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1 }, tab.Scroll)
@@ -704,7 +707,7 @@ function Tab:Select()
         tween(tab.Button, { BackgroundColor3 = active and self.Window.Theme.Raised or self.Window.Theme.Background,
             TextColor3 = active and self.Window.Theme.Text or self.Window.Theme.Muted })
         tween(tab.Label, { TextColor3 = active and self.Window.Theme.Text or self.Window.Theme.Muted })
-        paintIcon(tab.Icon, active and self.Window.Theme.Accent or self.Window.Theme.Muted)
+        paintIcon(tab.Icon, active and self.Window.Theme.Accent or self.Window.Theme.IconMuted)
     end
 end
 
