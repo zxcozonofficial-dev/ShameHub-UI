@@ -123,4 +123,4 @@ if autoload then
 end
 
 local about = window:AddPage({ Title = "About" }):AddTab("Library")
-about:AddSection({ Title = "ShameHub", Side = "Full" }):AddParagraph("ShameHub", "Geist Sans interface. Custom colors, backgrounds and keyboard controls.")
+about:AddSection({ Title = "ShameHub", Side = "Full" }):AddParagraph("ShameHub", "Roblox Studio/Script ui lib\nDiscord: shameraze & die.ru")
