@@ -309,7 +309,6 @@ function ShameHub.CreateWindow(options)
     local drag = new("Frame", { Name = "DragRegion", Size = UDim2.new(1, 0, 0, 50), BackgroundTransparency = 1, Active = false, ZIndex = 0 }, self.Root)
     self.DragHandle = drag
     local dragInput, start, origin
-    local dragTarget, dragVelocity
     local function beginDrag(input)
         if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
         if not self.Root.Visible or not self.Gui.Enabled then return end
@@ -322,8 +321,6 @@ function ShameHub.CreateWindow(options)
             origin = UDim2.fromOffset(current.X.Scale * viewport.X + current.X.Offset, current.Y.Scale * viewport.Y + current.Y.Offset)
             self.Root.Position = origin
             dragInput, start = input, input.Position
-            dragTarget = Vector2.new(origin.X.Offset, origin.Y.Offset)
-            dragVelocity = Vector2.zero
         end
     end
     local function changeDrag(input)
@@ -334,7 +331,8 @@ function ShameHub.CreateWindow(options)
             local half = self.Root.AbsoluteSize / 2
             local x = origin.X.Scale * size.X + origin.X.Offset + delta.X
             local y = origin.Y.Scale * size.Y + origin.Y.Offset + delta.Y
-            dragTarget = Vector2.new(math.clamp(x, half.X, math.max(half.X, size.X - half.X)), math.clamp(y, half.Y, math.max(half.Y, size.Y - half.Y)))
+            self.Root.Position = UDim2.fromOffset(math.clamp(x, half.X, math.max(half.X, size.X - half.X)), math.clamp(y, half.Y, math.max(half.Y, size.Y - half.Y)))
+            self.BasePosition = self.Root.Position
         end
     end
     local function endDrag(input)
@@ -343,30 +341,8 @@ function ShameHub.CreateWindow(options)
         end
     end
     self._CancelDrag = function()
-        dragInput, dragTarget, dragVelocity = nil, nil, nil
+        dragInput = nil
     end
-    self:_connect(RunService.RenderStepped, function(dt)
-        if not dragTarget or not self.Root.Visible then return end
-        dt = math.min(dt, 0.05)
-        local p = Vector2.new(self.Root.Position.X.Offset, self.Root.Position.Y.Offset)
-        local offset = p - dragTarget
-        local omega = dragInput and 15 or 11
-        local velocity = dragVelocity or Vector2.zero
-        local term = velocity + offset * omega
-        local decay = math.exp(-omega * dt)
-        local nextPosition = dragTarget + (offset + term * dt) * decay
-        dragVelocity = (velocity - term * (omega * dt)) * decay
-        local size = bounds.AbsoluteSize
-        local half = self.Root.AbsoluteSize / 2
-        nextPosition = Vector2.new(math.clamp(nextPosition.X, half.X, math.max(half.X, size.X - half.X)), math.clamp(nextPosition.Y, half.Y, math.max(half.Y, size.Y - half.Y)))
-        self.Root.Position = UDim2.fromOffset(nextPosition.X, nextPosition.Y)
-        self.BasePosition = self.Root.Position
-        if not dragInput and (nextPosition - dragTarget).Magnitude < 0.05 and dragVelocity.Magnitude < 0.1 then
-            self.Root.Position = UDim2.fromOffset(dragTarget.X, dragTarget.Y)
-            self.BasePosition = self.Root.Position
-            dragTarget, dragVelocity = nil, nil
-        end
-    end)
     self._DragHandlers = { Begin = beginDrag, Change = changeDrag, End = endDrag }
     self:_connect(UIS.InputBegan, beginDrag)
     self:_connect(UIS.InputChanged, changeDrag)
