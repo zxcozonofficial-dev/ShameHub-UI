@@ -215,6 +215,10 @@ function ShameHub.CreateWindow(options)
         AnchorPoint = Vector2.new(0.5, 0.5), BackgroundColor3 = t.Background,
         ClipsDescendants = true, Active = true,
     }, self.Gui)
+    self.BasePosition = self.Root.Position
+    self.MenuScale = Instance.new("UIScale")
+    self.MenuScale.Scale = 1
+    self.MenuScale.Parent = self.Root
     self.BackgroundImage = new("ImageLabel", {
         Name = "BackgroundImage", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1,
         Image = "", ImageTransparency = 0.65, ScaleType = Enum.ScaleType.Crop, Visible = false,
@@ -305,13 +309,17 @@ function ShameHub.CreateWindow(options)
     local drag = new("Frame", { Name = "DragRegion", Size = UDim2.new(1, 0, 0, 50), BackgroundTransparency = 1, Active = false, ZIndex = 0 }, self.Root)
     self.DragHandle = drag
     local dragInput, start, origin
+    local dragTarget, dragVelocity
     local function beginDrag(input)
         if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
         if not self.Root.Visible or not self.Gui.Enabled then return end
         local point = Vector2.new(input.Position.X, input.Position.Y)
         local pos, size = drag.AbsolutePosition, drag.AbsoluteSize
         if point.X >= pos.X and point.X <= pos.X + size.X and point.Y >= pos.Y and point.Y <= pos.Y + size.Y then
-            dragInput, start, origin = input, input.Position, self.Root.Position
+            dragInput, start = input, input.Position
+            origin = self.Root.Position
+            dragTarget = Vector2.new(origin.X.Offset, origin.Y.Offset)
+            dragVelocity = Vector2.zero
         end
     end
     local function changeDrag(input)
@@ -322,12 +330,31 @@ function ShameHub.CreateWindow(options)
             local half = self.Root.AbsoluteSize / 2
             local x = origin.X.Scale * size.X + origin.X.Offset + delta.X
             local y = origin.Y.Scale * size.Y + origin.Y.Offset + delta.Y
-            self.Root.Position = UDim2.fromOffset(math.clamp(x, half.X, math.max(half.X, size.X - half.X)), math.clamp(y, half.Y, math.max(half.Y, size.Y - half.Y)))
+            dragTarget = Vector2.new(math.clamp(x, half.X, math.max(half.X, size.X - half.X)), math.clamp(y, half.Y, math.max(half.Y, size.Y - half.Y)))
         end
     end
     local function endDrag(input)
-        if dragInput and (input == dragInput or input.UserInputType == dragInput.UserInputType) then dragInput = nil end
+        if dragInput and (input == dragInput or input.UserInputType == dragInput.UserInputType) then
+            dragInput = nil
+            task.spawn(function()
+                while not self.Dead and dragTarget and dragVelocity and (dragVelocity.Magnitude > 0.5 or (Vector2.new(self.Root.Position.X.Offset, self.Root.Position.Y.Offset) - dragTarget).Magnitude > 0.5) do
+                    local dt = RunService.RenderStepped:Wait()
+                    dragVelocity = dragVelocity + (dragTarget - Vector2.new(self.Root.Position.X.Offset, self.Root.Position.Y.Offset)) * (dt * 30)
+                    dragVelocity = dragVelocity * math.exp(-dt * 9)
+                    local p = Vector2.new(self.Root.Position.X.Offset, self.Root.Position.Y.Offset) + dragVelocity * dt
+                    self.Root.Position = UDim2.fromOffset(p.X, p.Y)
+                end
+                dragTarget, dragVelocity = nil, nil
+            end)
+        end
     end
+    self:_connect(RunService.RenderStepped, function(dt)
+        if dragInput and dragTarget then
+            local p = Vector2.new(self.Root.Position.X.Offset, self.Root.Position.Y.Offset)
+            p = p + (dragTarget - p) * (1 - math.exp(-dt * 24))
+            self.Root.Position = UDim2.fromOffset(p.X, p.Y)
+        end
+    end)
     self._DragHandlers = { Begin = beginDrag, Change = changeDrag, End = endDrag }
     self:_connect(UIS.InputBegan, beginDrag)
     self:_connect(UIS.InputChanged, changeDrag)
@@ -345,7 +372,35 @@ function ShameHub.CreateWindow(options)
 end
 
 function Window:SetVisible(visible)
-    self.Root.Visible = visible
+    visible = visible == true
+    if self.VisibilityTween then self.VisibilityTween:Cancel() end
+    if self.ScaleTween then self.ScaleTween:Cancel() end
+    if self.VisibilityToken then self.VisibilityToken = self.VisibilityToken + 1 else self.VisibilityToken = 1 end
+    local token = self.VisibilityToken
+    local targetAlpha = self.MenuTransparencyEnabled and self.MenuTransparency or 0
+    if visible then
+        self.Root.Visible = true
+        self.Root.Position = self.BasePosition + UDim2.fromOffset(0, -82)
+        self.Root.GroupTransparency = 1
+        self.MenuScale.Scale = 0.94
+        self.VisibilityTween = TweenService:Create(self.Root, TweenInfo.new(0.48, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+            Position = self.BasePosition, GroupTransparency = targetAlpha,
+        })
+        self.ScaleTween = TweenService:Create(self.MenuScale, TweenInfo.new(0.48, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 })
+        self.VisibilityTween:Play(); self.ScaleTween:Play()
+    else
+        self.VisibilityTween = TweenService:Create(self.Root, TweenInfo.new(0.32, Enum.EasingStyle.Quint, Enum.EasingDirection.In), {
+            Position = self.BasePosition + UDim2.fromOffset(0, -74), GroupTransparency = 1,
+        })
+        self.ScaleTween = TweenService:Create(self.MenuScale, TweenInfo.new(0.32, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Scale = 0.97 })
+        self.VisibilityTween:Play(); self.ScaleTween:Play()
+        self.VisibilityTween.Completed:Once(function()
+            if not self.Dead and token == self.VisibilityToken then
+                self.Root.Visible = false
+                self.Root.Position, self.Root.GroupTransparency, self.MenuScale.Scale = self.BasePosition, targetAlpha, 1
+            end
+        end)
+    end
     if self.Watermark then
         self.Watermark.Visible = self.WatermarkEnabled and not visible
         if self.Watermark.Visible then self._RefreshWatermark() end
@@ -687,13 +742,18 @@ end
 function Page:Select()
     for _, page in ipairs(self.Window.Pages) do
         local active = page == self
-        page.Frame.Visible = active
+        if active and self.Window.SelectedPage ~= page then
+            page.Frame.Visible = true
+            page.Frame.Position = UDim2.fromOffset(0, 7)
+            TweenService:Create(page.Frame, TweenInfo.new(0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Position = UDim2.fromOffset(0, 0) }):Play()
+        else page.Frame.Visible = active end
         page.Marker.Visible = active
         tween(page.Button, { BackgroundColor3 = active and self.Window.Theme.Raised or self.Window.Theme.Sidebar,
             TextColor3 = active and self.Window.Theme.Text or self.Window.Theme.Muted })
         tween(page.Label, { TextColor3 = active and self.Window.Theme.Text or self.Window.Theme.Muted })
         paintIcon(page.Icon, active and self.Window.Theme.Accent or self.Window.Theme.IconMuted)
     end
+    self.Window.SelectedPage = self
 end
 
 function Page:AddTab(title, options)
@@ -741,14 +801,24 @@ function Page:AddTab(title, options)
 end
 
 function Tab:Select()
+    local changed = self.Page.SelectedTab ~= self
     for _, tab in ipairs(self.Page.Tabs) do
         local active = tab == self
-        tab.Scroll.Visible, tab.Line.Visible = active, active
+        if active and changed then
+            tab.Scroll.Visible = true
+            tab.Scroll.Position = UDim2.fromOffset(8, 46)
+            tab.Scroll.ScrollBarImageTransparency = 1
+            TweenService:Create(tab.Scroll, TweenInfo.new(0.24, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+                Position = UDim2.fromOffset(0, 46), ScrollBarImageTransparency = 0,
+            }):Play()
+        else tab.Scroll.Visible = active end
+        tab.Line.Visible = active
         tween(tab.Button, { BackgroundColor3 = active and self.Window.Theme.Raised or self.Window.Theme.Background,
             TextColor3 = active and self.Window.Theme.Text or self.Window.Theme.Muted })
         tween(tab.Label, { TextColor3 = active and self.Window.Theme.Text or self.Window.Theme.Muted })
         paintIcon(tab.Icon, active and self.Window.Theme.Accent or self.Window.Theme.IconMuted)
     end
+    self.Page.SelectedTab = self
 end
 
 function Tab:AddSection(options)
@@ -1307,3 +1377,5 @@ function Window:ImportConfig(json, silent)
 end
 
 return ShameHub
+
+
