@@ -316,8 +316,12 @@ function ShameHub.CreateWindow(options)
         local point = Vector2.new(input.Position.X, input.Position.Y)
         local pos, size = drag.AbsolutePosition, drag.AbsoluteSize
         if point.X >= pos.X and point.X <= pos.X + size.X and point.Y >= pos.Y and point.Y <= pos.Y + size.Y then
+            if self.VisibilityTween then self.VisibilityTween:Cancel() end
+            local current = self.Root.Position
+            local viewport = bounds.AbsoluteSize
+            origin = UDim2.fromOffset(current.X.Scale * viewport.X + current.X.Offset, current.Y.Scale * viewport.Y + current.Y.Offset)
+            self.Root.Position = origin
             dragInput, start = input, input.Position
-            origin = self.Root.Position
             dragTarget = Vector2.new(origin.X.Offset, origin.Y.Offset)
             dragVelocity = Vector2.zero
         end
@@ -343,8 +347,9 @@ function ShameHub.CreateWindow(options)
                     dragVelocity = dragVelocity * math.exp(-dt * 9)
                     local p = Vector2.new(self.Root.Position.X.Offset, self.Root.Position.Y.Offset) + dragVelocity * dt
                     self.Root.Position = UDim2.fromOffset(p.X, p.Y)
+                    self.BasePosition = self.Root.Position
                 end
-                dragTarget, dragVelocity = nil, nil
+                if not dragInput then dragTarget, dragVelocity = nil, nil end
             end)
         end
     end
@@ -353,6 +358,7 @@ function ShameHub.CreateWindow(options)
             local p = Vector2.new(self.Root.Position.X.Offset, self.Root.Position.Y.Offset)
             p = p + (dragTarget - p) * (1 - math.exp(-dt * 24))
             self.Root.Position = UDim2.fromOffset(p.X, p.Y)
+            self.BasePosition = self.Root.Position
         end
     end)
     self._DragHandlers = { Begin = beginDrag, Change = changeDrag, End = endDrag }
@@ -361,7 +367,7 @@ function ShameHub.CreateWindow(options)
     self:_connect(UIS.InputEnded, endDrag)
     self:_connect(UIS.InputBegan, function(input, processed)
         if not UIS:GetFocusedTextBox() and not self.Capturing and self.LastCaptured ~= input and input.KeyCode == self.ToggleKey then
-            self:SetVisible(not self.Root.Visible)
+            self:SetVisible(not (self.VisibleTarget == nil and self.Root.Visible or self.VisibleTarget))
         end
     end)
     self:_connect(self.Gui.Destroying, function() self:Destroy() end)
@@ -373,6 +379,7 @@ end
 
 function Window:SetVisible(visible)
     visible = visible == true
+    self.VisibleTarget = visible
     if self.VisibilityTween then self.VisibilityTween:Cancel() end
     if self.ScaleTween then self.ScaleTween:Cancel() end
     if self.VisibilityToken then self.VisibilityToken = self.VisibilityToken + 1 else self.VisibilityToken = 1 end
