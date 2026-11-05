@@ -340,25 +340,31 @@ function ShameHub.CreateWindow(options)
     local function endDrag(input)
         if dragInput and (input == dragInput or input.UserInputType == dragInput.UserInputType) then
             dragInput = nil
-            task.spawn(function()
-                while not self.Dead and dragTarget and dragVelocity and (dragVelocity.Magnitude > 0.5 or (Vector2.new(self.Root.Position.X.Offset, self.Root.Position.Y.Offset) - dragTarget).Magnitude > 0.5) do
-                    local dt = RunService.RenderStepped:Wait()
-                    dragVelocity = dragVelocity + (dragTarget - Vector2.new(self.Root.Position.X.Offset, self.Root.Position.Y.Offset)) * (dt * 30)
-                    dragVelocity = dragVelocity * math.exp(-dt * 9)
-                    local p = Vector2.new(self.Root.Position.X.Offset, self.Root.Position.Y.Offset) + dragVelocity * dt
-                    self.Root.Position = UDim2.fromOffset(p.X, p.Y)
-                    self.BasePosition = self.Root.Position
-                end
-                if not dragInput then dragTarget, dragVelocity = nil, nil end
-            end)
         end
     end
+    self._CancelDrag = function()
+        dragInput, dragTarget, dragVelocity = nil, nil, nil
+    end
     self:_connect(RunService.RenderStepped, function(dt)
-        if dragInput and dragTarget then
-            local p = Vector2.new(self.Root.Position.X.Offset, self.Root.Position.Y.Offset)
-            p = p + (dragTarget - p) * (1 - math.exp(-dt * 24))
-            self.Root.Position = UDim2.fromOffset(p.X, p.Y)
+        if not dragTarget or not self.Root.Visible then return end
+        dt = math.min(dt, 0.05)
+        local p = Vector2.new(self.Root.Position.X.Offset, self.Root.Position.Y.Offset)
+        local offset = p - dragTarget
+        local omega = dragInput and 15 or 11
+        local velocity = dragVelocity or Vector2.zero
+        local term = velocity + offset * omega
+        local decay = math.exp(-omega * dt)
+        local nextPosition = dragTarget + (offset + term * dt) * decay
+        dragVelocity = (velocity - term * (omega * dt)) * decay
+        local size = bounds.AbsoluteSize
+        local half = self.Root.AbsoluteSize / 2
+        nextPosition = Vector2.new(math.clamp(nextPosition.X, half.X, math.max(half.X, size.X - half.X)), math.clamp(nextPosition.Y, half.Y, math.max(half.Y, size.Y - half.Y)))
+        self.Root.Position = UDim2.fromOffset(nextPosition.X, nextPosition.Y)
+        self.BasePosition = self.Root.Position
+        if not dragInput and (nextPosition - dragTarget).Magnitude < 0.05 and dragVelocity.Magnitude < 0.1 then
+            self.Root.Position = UDim2.fromOffset(dragTarget.X, dragTarget.Y)
             self.BasePosition = self.Root.Position
+            dragTarget, dragVelocity = nil, nil
         end
     end)
     self._DragHandlers = { Begin = beginDrag, Change = changeDrag, End = endDrag }
@@ -367,7 +373,9 @@ function ShameHub.CreateWindow(options)
     self:_connect(UIS.InputEnded, endDrag)
     self:_connect(UIS.InputBegan, function(input, processed)
         if not UIS:GetFocusedTextBox() and not self.Capturing and self.LastCaptured ~= input and input.KeyCode == self.ToggleKey then
-            self:SetVisible(not (self.VisibleTarget == nil and self.Root.Visible or self.VisibleTarget))
+            local shown = self.VisibleTarget
+            if shown == nil then shown = self.Root.Visible end
+            self:SetVisible(not shown)
         end
     end)
     self:_connect(self.Gui.Destroying, function() self:Destroy() end)
@@ -380,20 +388,23 @@ end
 function Window:SetVisible(visible)
     visible = visible == true
     self.VisibleTarget = visible
+    if self._CancelDrag then self._CancelDrag() end
+    self.VisibilityToken = (self.VisibilityToken or 0) + 1
     if self.VisibilityTween then self.VisibilityTween:Cancel() end
     if self.ScaleTween then self.ScaleTween:Cancel() end
-    if self.VisibilityToken then self.VisibilityToken = self.VisibilityToken + 1 else self.VisibilityToken = 1 end
     local token = self.VisibilityToken
     local targetAlpha = self.MenuTransparencyEnabled and self.MenuTransparency or 0
     if visible then
+        if not self.Root.Visible then
+            self.Root.Position = self.BasePosition + UDim2.fromOffset(0, -55)
+            self.Root.GroupTransparency = 1
+            self.MenuScale.Scale = 0.97
+        end
         self.Root.Visible = true
-        self.Root.Position = self.BasePosition + UDim2.fromOffset(0, -82)
-        self.Root.GroupTransparency = 1
-        self.MenuScale.Scale = 0.94
-        self.VisibilityTween = TweenService:Create(self.Root, TweenInfo.new(0.48, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+        self.VisibilityTween = TweenService:Create(self.Root, TweenInfo.new(0.42, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
             Position = self.BasePosition, GroupTransparency = targetAlpha,
         })
-        self.ScaleTween = TweenService:Create(self.MenuScale, TweenInfo.new(0.48, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 })
+        self.ScaleTween = TweenService:Create(self.MenuScale, TweenInfo.new(0.42, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Scale = 1 })
         self.VisibilityTween:Play(); self.ScaleTween:Play()
     else
         self.VisibilityTween = TweenService:Create(self.Root, TweenInfo.new(0.32, Enum.EasingStyle.Quint, Enum.EasingDirection.In), {
